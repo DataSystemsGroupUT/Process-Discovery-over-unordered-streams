@@ -12,6 +12,27 @@ public class DirectlyFollowsGraph implements Serializable {
     protected Set<String> nodes;
     protected Map<Edge, Integer> edges;
 
+    public static DirectlyFollowsGraph buildFromStrings(String s)
+    {
+        // We assume that the string is \n separated where each line
+        // is on the form Edge from: node to: node Frequency: n
+        String[] lines = s.split("\n");
+
+        DirectlyFollowsGraph result = new DirectlyFollowsGraph();
+
+        for (String line : lines)
+        {
+            String[] info = line.split(":");
+            String source, destination;
+            source = info[1].replace(" to","").trim();
+            destination = info[2].replace(" Frequency","").trim();
+            int frequency = Integer.parseInt(info[3].trim());
+            result.add(new Edge(source,destination),frequency);
+        }
+
+        return result;
+    }
+
     public DirectlyFollowsGraph()
     {
         nodes = new HashSet<>();
