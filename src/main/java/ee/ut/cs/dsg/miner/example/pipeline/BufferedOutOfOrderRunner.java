@@ -37,12 +37,11 @@ public class BufferedOutOfOrderRunner {
         String kafka;
         String fileName;
         String topic;
-        String jobType;
-        String numRecordsToEmit;
 
-        String generateOutput = parameters.get("generateOutput");
-        if (generateOutput == null)
-            generateOutput="No";
+        String numRecordsToEmit;
+        String interArrivalTime;
+
+
 
         String winLen = parameters.get("windowSize");
 
@@ -59,12 +58,19 @@ public class BufferedOutOfOrderRunner {
         }
 
         numRecordsToEmit = parameters.get("numRecordsToEmit");
+        interArrivalTime = parameters.get("interArrivalTime");
 
         int iNumRecordsToEmit=Integer.MAX_VALUE;
+
+
 
         if (numRecordsToEmit != null)
             iNumRecordsToEmit = Integer.parseInt(numRecordsToEmit);
 
+        long iInterArrivalTime = 1000;
+
+        if (interArrivalTime != null)
+            iInterArrivalTime = Long.parseLong(interArrivalTime);
 
         if (source.toLowerCase().equals("kafka")) {
             kafka = parameters.get("kafka");
@@ -79,8 +85,8 @@ public class BufferedOutOfOrderRunner {
             consumer.setStartFromEarliest();
             rawEventStream = env.addSource(consumer).setParallelism(1).map(new EventMapper());
         } else if (source.equalsIgnoreCase("file")){
-            fileName = parameters.get("fileName");
-            rawEventStream = env.addSource(new EventLogSource(fileName, iNumRecordsToEmit));//.setParallelism(1);
+            fileName = parameters.get("filePath")+"\\"+parameters.get("fileName");
+            rawEventStream = env.addSource(new EventLogSource(fileName, iNumRecordsToEmit, iInterArrivalTime*1000));//.setParallelism(1);
         }
         else
             //rawEventStream = env.addSource(new FixedInOrderSource());
@@ -88,12 +94,12 @@ public class BufferedOutOfOrderRunner {
 
         rawEventStream
                 .keyBy(Event::getCaseID)
-                .window(TumblingProcessingTimeWindows.of(Time.seconds(windowLength)))
+                .window(TumblingProcessingTimeWindows.of(Time.minutes(windowLength)))
                 .process(new BufferedOutOfOrderProcessor())
                 .keyBy((KeySelector<DirectlyFollowsGraph, String>) directlyFollowsGraph -> "1")
-                //.process(new FullDFGProcessor()).setParallelism(1)
-                .process(new IncrementalDFGProcessor()).setParallelism(1)
-                .writeAsText("GeneratedDFG.txt", FileSystem.WriteMode.OVERWRITE).setParallelism(1);
+                .process(new FullDFGProcessor()).setParallelism(1)
+            //    .process(new IncrementalDFGProcessor()).setParallelism(1)
+                .writeAsText(parameters.get("fileName")+"-GlobalDFG-Window-Length"+winLen+".txt", FileSystem.WriteMode.OVERWRITE).setParallelism(1);
 
 
         env.execute("Test Buffered Out of Order Processor");

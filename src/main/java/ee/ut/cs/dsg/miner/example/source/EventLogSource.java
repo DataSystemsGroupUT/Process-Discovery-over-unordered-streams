@@ -15,16 +15,22 @@ public class EventLogSource implements SourceFunction<Event> {
     private boolean running = true;
     private String filePath;
     private int numRecordsToEmit=Integer.MAX_VALUE;
+    private long interArrivalTime=1000;
     public EventLogSource(String filePath) {
         this.filePath = filePath;
     }
 
     public EventLogSource(String filePath, int numRecordsToEmit)
     {
-        this.filePath = filePath;
-        this.numRecordsToEmit = numRecordsToEmit;
+        this(filePath,numRecordsToEmit, 1000);
     }
 
+    public EventLogSource(String filePath, int numRecordsToEmit, long interArrivalTime)
+    {
+        this.filePath = filePath;
+        this.numRecordsToEmit = numRecordsToEmit;
+        this.interArrivalTime = interArrivalTime;
+    }
 
     @Override
     public void run(SourceContext<Event> sourceContext) throws Exception {
@@ -47,16 +53,18 @@ public class EventLogSource implements SourceFunction<Event> {
             line = reader.readLine();
             int offset = 0;
 //            List<String> uniqueKeys = new ArrayList<>();
-            //TODO: This part needs to be fixed to adapt to the nature of XES files (event logs)
+
             while (running && line != null && recordsEmitted <= numRecordsToEmit) {
                 String[] data = line.replace("[","").replace("]","").split(",");
 
-                if (data.length == 5)
+                if (data.length == 5)// this is to handle the extra two timestamps added by the OOO generator
                     offset=2;
 
                 Long ts = Long.parseLong(data[2+offset].trim());
-                sourceContext.collectWithTimestamp(new Event(data[1+offset].trim(),Long.parseLong(data[0+offset].trim()),ts),ts);
-                Thread.sleep(100);
+                Event ev = new Event(data[1+offset].trim(),Long.parseLong(data[0+offset].trim()),ts);
+          //      System.out.println(ev.toString());
+                sourceContext.collectWithTimestamp(ev,ts);
+                Thread.sleep(interArrivalTime);
                 recordsEmitted++;
                 line=reader.readLine();
             }

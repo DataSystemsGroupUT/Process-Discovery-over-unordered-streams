@@ -47,9 +47,10 @@ public class BufferedOutOfOrderProcessor extends ProcessWindowFunction<Event, Di
         }
 
         orderedList.sort(Comparator.comparingLong(Event::getTimestamp));
+       // System.out.println(orderedList.toString());
 
         if (orderedList.size() > 0)
-            lastTS = orderedList.get(0).getTimestamp();
+            lastTS = orderedList.get(orderedList.size()-1).getTimestamp();
 
         DirectlyFollowsGraph dfg = new DirectlyFollowsGraph();
 

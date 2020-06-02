@@ -75,4 +75,31 @@ public class DirectlyFollowsGraph implements Serializable {
         return sb.toString();
     }
 
+    public int getEditDistance(DirectlyFollowsGraph other)
+    {
+        /*
+        How many edit operations, add node, remove node, add edge (weight), or remove edge (weight) to transform the
+        current graph to other graph
+        */
+        Set<String> otherNodes = other.getNodes();
+        Map<Edge, Integer> otherEdges = other.getEdges();
+        int distance = 0;
+        for (String node :nodes)
+            if (!otherNodes.contains(node))
+                distance++;
+        for (String node: otherNodes)
+            if (!this.nodes.contains(node))
+                distance++;
+        for (Edge e: edges.keySet())
+        {
+            Integer weightOther = otherEdges.get(e);
+            if (weightOther == null)
+                distance++;
+            else
+                distance+= Math.abs(edges.get(e)-weightOther.intValue());
+        }
+
+        return distance;
+    }
+
 }
