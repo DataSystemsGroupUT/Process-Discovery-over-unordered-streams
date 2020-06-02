@@ -23,6 +23,7 @@ public class DirectlyFollowsGraphTest {
                 && result.getNodes().contains("Loan application rejected"));
     }
 
+
     @Test
     public void getEditDistance() {
 
