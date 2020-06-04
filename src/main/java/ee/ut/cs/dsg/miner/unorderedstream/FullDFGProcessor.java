@@ -24,6 +24,7 @@ public class FullDFGProcessor extends KeyedProcessFunction<String, DirectlyFollo
     public void processElement(DirectlyFollowsGraph updatesToDFG, Context context, Collector<DirectlyFollowsGraph> collector)
             throws Exception {
 
+        System.out.println(" Current graph key is "+context.getCurrentKey());
         DirectlyFollowsGraph dfgSofar = dfgState.value();
 
         if (dfgSofar == null)
