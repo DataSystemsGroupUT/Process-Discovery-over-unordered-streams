@@ -8,6 +8,7 @@ import ee.ut.cs.dsg.miner.example.source.FixedUnorderedSource;
 import ee.ut.cs.dsg.miner.unorderedstream.BufferedOutOfOrderProcessor;
 import ee.ut.cs.dsg.miner.unorderedstream.FullDFGProcessor;
 import ee.ut.cs.dsg.miner.unorderedstream.IncrementalDFGProcessor;
+import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.api.java.utils.ParameterTool;
@@ -95,13 +96,15 @@ public class BufferedOutOfOrderRunner {
         rawEventStream
                 .keyBy(Event::getCaseID)
                 .window(TumblingProcessingTimeWindows.of(Time.minutes(windowLength)))
-                .process(new BufferedOutOfOrderProcessor())
+                .process(new BufferedOutOfOrderProcessor()).setParallelism(1)
                 .keyBy((KeySelector<DirectlyFollowsGraph, String>) directlyFollowsGraph -> "1")
                 .process(new FullDFGProcessor()).setParallelism(1)
             //    .process(new IncrementalDFGProcessor()).setParallelism(1)
                 .writeAsText(parameters.get("fileName")+"-GlobalDFG-Window-Length"+winLen+".txt", FileSystem.WriteMode.OVERWRITE).setParallelism(1);
 
 
-        env.execute("Test Buffered Out of Order Processor");
+        JobExecutionResult result = env.execute("Test Buffered Out of Order Processor");
+        System.out.println("Total processed change DFGs "+result.getAccumulatorResult("ChangeDFGCount").toString());
+
     }
 }

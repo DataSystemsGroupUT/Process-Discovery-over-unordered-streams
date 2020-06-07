@@ -29,13 +29,16 @@ public class XESPreprocessor {
             String sTimestamp;
             String lifeCycle;
             String lineToWrite;
-            SimpleDateFormat formatter = new SimpleDateFormat("YYYY-MM-DD HH:mm:ss");
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             while(line != null)
             {
                 line = line.replaceAll("\\s","");
                 if (line.startsWith("<trace"))
                 {
-                    caseID++;
+                    line = reader.readLine();
+                    if (line.contains("concept:name")) {
+                        caseID = Integer.parseInt(line.split("value=")[1].replace("\"","").replace("/>",""));
+                    }
                 }
                 else if (line.startsWith("<event"))
                 {
@@ -58,7 +61,7 @@ public class XESPreprocessor {
                         else
                             System.out.println("Date too short: "+ sTimestamp);
                         sTimestamp = sTimestamp.replace("T"," ");
-                        Date ts =  formatter.parse(sTimestamp);
+                        Date ts = formatter.parse(sTimestamp);
                         lineToWrite = String.valueOf(caseID)+","+activityName+","+ts.getTime()+"\n";
                         writer.write(lineToWrite);
                     }

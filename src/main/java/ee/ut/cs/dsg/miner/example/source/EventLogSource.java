@@ -49,7 +49,7 @@ public class EventLogSource implements SourceFunction<Event> {
                 reader = new BufferedReader(new FileReader(filePath));
             }
             String line;
-            reader.readLine();//skip the header line
+ //           reader.readLine();//skip the header line
             line = reader.readLine();
             int offset = 0;
 //            List<String> uniqueKeys = new ArrayList<>();
@@ -63,12 +63,22 @@ public class EventLogSource implements SourceFunction<Event> {
                 Long ts = Long.parseLong(data[2+offset].trim());
                 Event ev = new Event(data[1+offset].trim(),Long.parseLong(data[0+offset].trim()),ts);
           //      System.out.println(ev.toString());
-                sourceContext.collectWithTimestamp(ev,ts);
+                sourceContext.collect(ev);
                 Thread.sleep(interArrivalTime);
+               // Thread.sleep(100);
                 recordsEmitted++;
                 line=reader.readLine();
             }
+            System.out.println("Records emitted "+recordsEmitted);
             reader.close();
+
+            // just keep sending dummy records for the sake of allowing the pipeline to flush all the remaining
+            // computations
+            for (int secs = 1; secs <= 600; secs++)
+            {
+                sourceContext.collect(new Event("DUMMY", -1, System.currentTimeMillis()));
+                Thread.sleep(interArrivalTime);
+            }
 //            for (String key: uniqueKeys)
 ////                        sourceContext.collectWithTimestamp(new SpeedEvent(key, Long.MAX_VALUE, new Double(-100)), Long.MAX_VALUE);
             // sourceContext.emitWatermark(new Watermark(Long.MAX_VALUE));

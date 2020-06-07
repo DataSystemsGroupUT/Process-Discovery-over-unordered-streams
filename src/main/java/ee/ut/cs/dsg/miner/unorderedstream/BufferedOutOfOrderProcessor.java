@@ -28,6 +28,9 @@ public class BufferedOutOfOrderProcessor extends ProcessWindowFunction<Event, Di
 
         ValueState<Long>  lastTimestampVS = context.globalState().getState(leastSeenTimestampPerFiring);
 
+
+        System.out.println("Handling window from: "+context.window().getStart() +" to: "+context.window().getEnd()+ " for key: "+
+                aLong);
         long lastTS = lastTimestampVS.value() != null?  lastTimestampVS.value().longValue(): Long.MIN_VALUE;
 
 
@@ -47,7 +50,7 @@ public class BufferedOutOfOrderProcessor extends ProcessWindowFunction<Event, Di
         }
 
         orderedList.sort(Comparator.comparingLong(Event::getTimestamp));
-       // System.out.println(orderedList.toString());
+      //  System.out.println(orderedList.toString());
 
         if (orderedList.size() > 0)
             lastTS = orderedList.get(orderedList.size()-1).getTimestamp();
@@ -61,6 +64,8 @@ public class BufferedOutOfOrderProcessor extends ProcessWindowFunction<Event, Di
             dfg.add(e,1);
         }
 
+        dfg.setComputingTimeStart(context.window().getStart());
+        dfg.setComputingTimeEnd(context.window().getEnd());
         collector.collect(dfg);
 
         lastTimestampVS.update(lastTS);

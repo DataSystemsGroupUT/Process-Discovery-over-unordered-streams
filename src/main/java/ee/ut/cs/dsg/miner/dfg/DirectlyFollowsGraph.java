@@ -6,11 +6,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class DirectlyFollowsGraph implements Serializable {
 
     protected Set<String> nodes;
     protected Map<Edge, Integer> edges;
+
+    private long computingTimeStart;
+    private long computingTimeEnd;
 
     public static DirectlyFollowsGraph buildFromStrings(String s)
     {
@@ -37,10 +41,14 @@ public class DirectlyFollowsGraph implements Serializable {
     {
         nodes = new HashSet<>();
         edges = new HashMap<>();
+        computingTimeStart = Long.MIN_VALUE;
+        computingTimeEnd = Long.MIN_VALUE;
 
     }
     public void add(Edge e, int frequency)
     {
+        if (frequency == 0)
+            return;
         nodes.add(e.getSource());
         nodes.add(e.getDestination());
 
@@ -53,6 +61,11 @@ public class DirectlyFollowsGraph implements Serializable {
         else
         {
             freq = Integer.valueOf(frequency);
+        }
+        if (freq == 0)
+        {
+            edges.remove(e);
+            return;
         }
         edges.put(e,freq);
 
@@ -89,6 +102,7 @@ public class DirectlyFollowsGraph implements Serializable {
     public String toString()
     {
         StringBuilder sb = new StringBuilder();
+        sb.append("start TS:"+this.getComputingTimeStart()+"\n");
         for (Edge e : getEdges().keySet())
         {
             sb.append(e.toString()).append(" Frequency: ").append(getEdgeFrequency(e)).append("\n");
@@ -124,40 +138,44 @@ public class DirectlyFollowsGraph implements Serializable {
 
         int loss = 0;
         int excess = 0;
+//        allEdges = allEdges.stream().filter(e -> this.getEdgeFrequency(e) > 0 || base.getEdgeFrequency(e) > 0).collect(Collectors.toSet());
         for (Edge e: allEdges)
         {
             int localFrequency = this.getEdgeFrequency(e);
             int baseGraphEdgeFrequency = base.getEdgeFrequency(e);
             int difference = baseGraphEdgeFrequency - localFrequency;
             if (difference < 0) // we have more frequency in the current graph than the base one, so we have excess
-                excess += -1*difference;
-            else
+            {
+//                System.out.println(e.toString()+" from current graph with frequency "+localFrequency+" \n " +
+//                        " exceeds the frequency from the base model with "+-1*difference+"\n");
+                excess += -1 * difference;
+            }
+            else if (difference >0 ){
+//                System.out.println(e.toString()+" from current graph with frequency "+localFrequency+" \n " +
+//                        " is lower than base model the frequency from the base model with "+difference+"\n");
                 loss += difference; //even if there is no difference, we are adding zeros.
+            }
         }
 
 
-//        for (Edge e: this.edges.keySet())
-//        {
-//            int localFrequency = this.getEdgeFrequency(e);
-//            int baseGraphEdgeFrequency = base.get
-//        }
-//        int distance = 0;
-//        for (String node :nodes)
-//            if (!otherNodes.contains(node))
-//                distance++;
-//        for (String node: otherNodes)
-//            if (!this.nodes.contains(node))
-//                distance++;
-//        for (Edge e: edges.keySet())
-//        {
-//            Integer weightOther = otherEdges.get(e);
-//            if (weightOther == null)
-//                distance++;
-//            else
-//                distance+= Math.abs(edges.get(e)-weightOther.intValue());
-//        }
+
 
         return (2d - ((double) loss/ totalFrequencyBase) - ((double) excess/totalFrequencyThis ))/2;
     }
 
+    public void setComputingTimeEnd(long computingTimeEnd) {
+        this.computingTimeEnd = computingTimeEnd;
+    }
+
+    public void setComputingTimeStart(long computingTimeStart) {
+        this.computingTimeStart = computingTimeStart;
+    }
+
+    public long getComputingTimeStart(){
+        return computingTimeStart;
+    }
+    public long getComputingTimeEnd()
+    {
+        return  computingTimeEnd;
+    }
 }

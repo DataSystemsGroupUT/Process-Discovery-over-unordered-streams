@@ -27,6 +27,8 @@ public class SpeculativeOutOfOrderProcessor extends KeyedProcessFunction<Long, E
     // I need to store also the earliest possible, within the K limit, seen timestamp to drop the element if it was received after.
     private long minAcceptedEventTime;
 
+    public SpeculativeOutOfOrderProcessor()
+    {}
 
     public SpeculativeOutOfOrderProcessor(long slackTime) {
         this.slackTime = slackTime;
@@ -38,8 +40,8 @@ public class SpeculativeOutOfOrderProcessor extends KeyedProcessFunction<Long, E
     public void open(Configuration parameters) throws Exception {
         super.open(parameters);
 
-        bufferedEvents = getRuntimeContext().getListState(new ListStateDescriptor<Event>("bufferedEvents",Event.class));
-        minTS = getRuntimeContext().getState(new ValueStateDescriptor<Long>("minTS", Long.class));
+        bufferedEvents = getRuntimeContext().getListState(new ListStateDescriptor<>("bufferedEvents",Event.class));
+//        minTS = getRuntimeContext().getState(new ValueStateDescriptor<>("minTS", Long.class));
     //    speculativeDFG = getRuntimeContext().getState(new ValueStateDescriptor<DirectlyFollowsGraph>("speculativeDFG", DirectlyFollowsGraph.class));
 
 
@@ -52,14 +54,14 @@ public class SpeculativeOutOfOrderProcessor extends KeyedProcessFunction<Long, E
     public void processElement(Event event, Context context, Collector<DirectlyFollowsGraph> collector) throws Exception {
 
         // we do not process too late elements
-        if (minTS.value() != null)
-            minAcceptedEventTime = minTS.value().longValue();
-//        if (minAcceptedEventTime == 0)
-//            minAcceptedEventTime = event.getTimestamp();
-        if (event.getTimestamp() < minAcceptedEventTime) {
-            System.out.println("Ignoring event: "+event.toString());
-            return;
-        }
+//        if (minTS.value() != null)
+//            minAcceptedEventTime = minTS.value().longValue();
+////        if (minAcceptedEventTime == 0)
+////            minAcceptedEventTime = event.getTimestamp();
+//        if (event.getTimestamp() < minAcceptedEventTime) {
+//            System.out.println("Ignoring event: "+event.toString());
+//            return;
+//        }
         ArrayList<Event> insertionSortedList = new ArrayList<>();
 
         bufferedEvents.get().forEach(insertionSortedList::add);
@@ -84,14 +86,14 @@ public class SpeculativeOutOfOrderProcessor extends KeyedProcessFunction<Long, E
                 prev = insertionSortedList.get(insertionSortedList.size() - 1);
                 insertionSortedList.add(event);
                 dfgSoFar.add(new Edge(prev.getActivity(), event.getActivity()),1);
-            } else if (event.getTimestamp() <= insertionSortedList.get(0).getTimestamp()) {
+            } else if (event.getTimestamp() < insertionSortedList.get(0).getTimestamp()) {
                 System.out.println("Processing a late event at the head of the list for process instance "+context.getCurrentKey());
                 prev = insertionSortedList.get(0);
                 insertionSortedList.add(0, event);
-                dfgSoFar.add(new Edge(prev.getActivity(), event.getActivity()),1);
+                dfgSoFar.add(new Edge(event.getActivity(),prev.getActivity()),1);
             } else // iterate to find its location
             {
-                for (int i = 1; i < insertionSortedList.size()-1; i++)
+                for (int i = 0; i < insertionSortedList.size()-1; i++)
                 {
                     prev = insertionSortedList.get(i);
                     next = insertionSortedList.get(i+1);
@@ -101,9 +103,16 @@ public class SpeculativeOutOfOrderProcessor extends KeyedProcessFunction<Long, E
                         // send a negative DFG edge
                         System.out.println("Processing a late element at the middle of the list for process instance "+context.getCurrentKey());
                         insertionSortedList.add(i+1,event);
-                        dfgSoFar.add(new Edge(prev.getActivity(), next.getActivity()),-1);
-                        dfgSoFar.add(new Edge(prev.getActivity(), event.getActivity()),1);
-                        dfgSoFar.add(new Edge(event.getActivity(), next.getActivity()),1);
+                        Edge toBreak, toAdd1, toAdd2;
+
+                        toBreak = new Edge(prev.getActivity(), next.getActivity());
+                        toAdd1 = new Edge(prev.getActivity(), event.getActivity());
+                        toAdd2 = new Edge(event.getActivity(), next.getActivity());
+                        dfgSoFar.add( toBreak,-1);
+                        dfgSoFar.add( toAdd1,1);
+                        dfgSoFar.add( toAdd2,1);
+                        System.out.println("Breaking the edge "+toBreak+ ". Adding edge "+toAdd1+" and edge "+toAdd2+
+                                " in case "+context.getCurrentKey());
                         break;
                     }
                 }
@@ -111,10 +120,16 @@ public class SpeculativeOutOfOrderProcessor extends KeyedProcessFunction<Long, E
         }
         else {
             insertionSortedList.add(event);
-            System.out.println("Seeding list for process instance "+context.getCurrentKey());
+//            System.out.println("Seeding list for process instance "+context.getCurrentKey());
         }
         bufferedEvents.update(insertionSortedList);
+        // The setting of the time stamp is used to control the emission of updated global DFG later on.
+        long ts = context.timestamp();
+        dfgSoFar.setComputingTimeStart(ts);
+        dfgSoFar.setComputingTimeEnd(ts);
+
         collector.collect(dfgSoFar);
+     //   System.out.println("Number of events buffered for case "+context.getCurrentKey()+ " is "+insertionSortedList.size());
 
 //        if (minTS.value() ==null)
 //            context.timerService().registerProcessingTimeTimer(context.timerService().currentProcessingTime()+slackTime);
