@@ -5,9 +5,9 @@ import ee.ut.cs.dsg.miner.events.Event;
 import ee.ut.cs.dsg.miner.example.source.EventLogSource;
 import ee.ut.cs.dsg.miner.example.source.EventMapper;
 import ee.ut.cs.dsg.miner.example.source.FixedUnorderedSource;
+import ee.ut.cs.dsg.miner.unorderedstream.BufferedOOOUnawareProcessor;
 import ee.ut.cs.dsg.miner.unorderedstream.BufferedOutOfOrderProcessor;
 import ee.ut.cs.dsg.miner.unorderedstream.FullDFGProcessor;
-import ee.ut.cs.dsg.miner.unorderedstream.IncrementalDFGProcessor;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.java.functions.KeySelector;
@@ -19,14 +19,13 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.AssignerWithPeriodicWatermarks;
 import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
-import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011;
 
 import javax.annotation.Nullable;
 import java.util.Properties;
 
-public class BufferedOutOfOrderRunner {
+public class BufferedOOOUnawareRunner {
 
     private static long windowLength = 10L;
 
@@ -116,11 +115,11 @@ public class BufferedOutOfOrderRunner {
                 })
                 .keyBy(Event::getCaseID)
                 .window(TumblingEventTimeWindows.of(Time.minutes(windowLength)))
-                .process(new BufferedOutOfOrderProcessor()).setParallelism(1)
+                .process(new BufferedOOOUnawareProcessor()).setParallelism(1)
                 .keyBy((KeySelector<DirectlyFollowsGraph, String>) directlyFollowsGraph -> "1")
                 .process(new FullDFGProcessor()).setParallelism(1)
             //    .process(new IncrementalDFGProcessor()).setParallelism(1)
-                .writeAsText(parameters.get("fileName")+"-GlobalDFG-Window-Length"+winLen+".txt", FileSystem.WriteMode.OVERWRITE).setParallelism(1);
+                .writeAsText(parameters.get("fileName")+"-GlobalDFG-OOOUnaware-Window-Length"+winLen+".txt", FileSystem.WriteMode.OVERWRITE).setParallelism(1);
 
 
         JobExecutionResult result = env.execute("Test Buffered Out of Order Processor");

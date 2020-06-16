@@ -21,7 +21,7 @@ public class GraphAccurracyComparator {
     public static void main(String[] args) throws Exception
     {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setStreamTimeCharacteristic(TimeCharacteristic.ProcessingTime);
+        env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
 
         ParameterTool parameters = ParameterTool.fromArgs(args);
@@ -31,10 +31,10 @@ public class GraphAccurracyComparator {
         String oooGraphPath = parameters.getRequired("oooGraphPath");
         String oooGraphFile = parameters.getRequired("oooGraphFile");
 
-        DataStream<Tuple2<Integer, String>> baseGraphStream  = env.addSource(new DFGGraphSource(baseGraphPath+"\\"+baseGraphFile));
-        DataStream<Tuple2<Integer, String>> oooGraphStream = env.addSource(new DFGGraphSource(oooGraphPath+"\\"+oooGraphFile));
+        DataStream<Tuple2<Long, String>> baseGraphStream  = env.addSource(new DFGGraphSource(baseGraphPath+"\\"+baseGraphFile));
+        DataStream<Tuple2<Long, String>> oooGraphStream = env.addSource(new DFGGraphSource(oooGraphPath+"\\"+oooGraphFile));
 
-        baseGraphStream.keyBy(0).connect(oooGraphStream.keyBy(0)).process(new CoProcessFunction<Tuple2<Integer, String>, Tuple2<Integer, String>, Tuple2<Integer, Double>>() {
+        baseGraphStream.keyBy(0).connect(oooGraphStream.keyBy(0)).process(new CoProcessFunction<Tuple2<Long, String>, Tuple2<Long, String>, String>() {
 
             class GraphState
             {
@@ -51,7 +51,7 @@ public class GraphAccurracyComparator {
 
             @Override
             // this should be the ordered DFG
-            public void processElement1(Tuple2<Integer, String> element, Context context, Collector<Tuple2<Integer, Double>> collector) throws Exception {
+            public void processElement1(Tuple2<Long, String> element, Context context, Collector<String> collector) throws Exception {
                 GraphState current = storedGraph.value();
 
                 if (current == null)
@@ -66,13 +66,14 @@ public class GraphAccurracyComparator {
                     DirectlyFollowsGraph oooDFG = DirectlyFollowsGraph.buildFromStrings(current.graphString);
                     DirectlyFollowsGraph orderedDFG = DirectlyFollowsGraph.buildFromStrings(element.f1);
 
-                    collector.collect(new Tuple2<>(element.f0, oooDFG.compareTo(orderedDFG)));
+                    collector.collect(new StringBuilder().append(element.f0).append(",").append(oooDFG.compareTo(orderedDFG)).toString());
+                    storedGraph.update(null);
                 }
             }
 
             @Override
             //This should be the unordered DFG
-            public void processElement2(Tuple2<Integer, String> element, Context context, Collector<Tuple2<Integer, Double>> collector) throws Exception {
+            public void processElement2(Tuple2<Long, String> element, Context context, Collector<String> collector) throws Exception {
                 GraphState current = storedGraph.value();
 
                 if (current == null)
@@ -87,7 +88,8 @@ public class GraphAccurracyComparator {
                     DirectlyFollowsGraph orderedDFG = DirectlyFollowsGraph.buildFromStrings(current.graphString);
                     DirectlyFollowsGraph oooDFG = DirectlyFollowsGraph.buildFromStrings(element.f1);
 
-                    collector.collect(new Tuple2<>(element.f0, oooDFG.compareTo(orderedDFG)));
+                    collector.collect(new StringBuilder().append(element.f0).append(",").append(oooDFG.compareTo(orderedDFG)).toString());
+                    storedGraph.update(null);
                 }
             }
         }).writeAsText(baseGraphFile+" compared to "+oooGraphFile+".csv", FileSystem.WriteMode.OVERWRITE).setParallelism(1);

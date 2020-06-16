@@ -26,12 +26,29 @@ public class DirectlyFollowsGraph implements Serializable {
 
         for (String line : lines)
         {
+
+            if (line.length() ==0)
+                continue;
+
+            if (line.startsWith("start"))
+            {
+
+                continue;
+            }
             String[] info = line.split(":");
             String source, destination;
-            source = info[1].replace(" to","").trim();
-            destination = info[2].replace(" Frequency","").trim();
-            int frequency = Integer.parseInt(info[3].trim());
-            result.add(new Edge(source,destination),frequency);
+            try {
+                if (info.length < 2)
+                    System.out.println(line);
+                source = info[1].replace(" to", "").trim();
+                destination = info[2].replace(" Frequency", "").trim();
+                int frequency = Integer.parseInt(info[3].trim());
+                result.add(new Edge(source, destination), frequency);
+            }
+            catch  (Exception e)
+            {
+                e.printStackTrace();
+            }
         }
 
         return result;

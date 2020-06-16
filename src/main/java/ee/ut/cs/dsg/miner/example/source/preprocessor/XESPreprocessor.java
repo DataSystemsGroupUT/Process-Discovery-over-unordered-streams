@@ -16,8 +16,9 @@ public class XESPreprocessor {
     {
         this.filePath = xesFile;
     }
-    public void parsseToCSV(String destinationFile)
+    public void parseToCSV(String destinationFile)
     {
+        int localCaseID = 0;
         try{
             int caseID = 0;
             BufferedReader reader;
@@ -36,35 +37,67 @@ public class XESPreprocessor {
                 if (line.startsWith("<trace"))
                 {
                     line = reader.readLine();
+                    while (!line.contains("concept:name") && !line.startsWith("<event"))
+                        line = reader.readLine();
                     if (line.contains("concept:name")) {
-                        caseID = Integer.parseInt(line.split("value=")[1].replace("\"","").replace("/>",""));
+                        //String _case = line.split("value=")[1].replace("\"","").replace("/>","");
+                        try {
+                            caseID = Integer.parseInt(line.split("value=")[1].replace("\"", "").replace("/>", ""));
+                        }
+                        catch (NumberFormatException nfe)
+                        {
+                            System.out.println(line);
+                            caseID = localCaseID++;
+                        }
+                    }
+                    else
+                    {
+                        caseID = localCaseID++;
                     }
                 }
-                else if (line.startsWith("<event"))
+                if (line.startsWith("<event"))
                 {
-                    activityName =  reader.readLine();
-                    if (activityName.contains("org:resource"))
-                        activityName = reader.readLine();
-                    activityName = activityName.split("value=")[1];
-                    activityName = activityName.substring(1, activityName.length()-3);
-
-                    lifeCycle = reader.readLine();
-
-                    sTimestamp = reader.readLine();
-                    // read the closing event tag
-                    reader.readLine();
-                    if (lifeCycle.contains("complete"))
+                    boolean activityFound=false, timestampFound=false;
+                    Date ts=null;
+                    activityName="";
+                    while (!activityFound || !timestampFound)
                     {
-                        sTimestamp = sTimestamp.split("value=")[1];
-                        if (sTimestamp.length()> 13)
-                            sTimestamp = sTimestamp.substring(1, sTimestamp.length()-13);
-                        else
-                            System.out.println("Date too short: "+ sTimestamp);
-                        sTimestamp = sTimestamp.replace("T"," ");
-                        Date ts = formatter.parse(sTimestamp);
+                        line = reader.readLine();
+                        if (line.contains("concept:name"))
+                        {
+                            activityName = line;
+                            activityName = activityName.split("value=")[1];
+                            activityName = activityName.substring(1, activityName.length()-3);
+                            activityFound = true;
+                        }
+                        else if (line.contains("time:timestamp"))
+                        {
+                            sTimestamp = line;
+                            sTimestamp = sTimestamp.split("value=")[1];
+                            if (sTimestamp.length()> 13)
+                                sTimestamp = sTimestamp.substring(1, sTimestamp.length()-9);
+                            else
+                                System.out.println("Date too short: "+ sTimestamp);
+                            sTimestamp = sTimestamp.replace("T"," ");
+                            ts = formatter.parse(sTimestamp);
+                            timestampFound=true;
+                        }
+
+                    }
+
+
+
+               //     lifeCycle = reader.readLine();
+
+
+                    // read the closing event tag
+//                    reader.readLine();
+//                    if (lifeCycle.contains("complete"))
+//                    {
+
                         lineToWrite = String.valueOf(caseID)+","+activityName+","+ts.getTime()+"\n";
                         writer.write(lineToWrite);
-                    }
+//                    }
                 }
                 line = reader.readLine();
             }

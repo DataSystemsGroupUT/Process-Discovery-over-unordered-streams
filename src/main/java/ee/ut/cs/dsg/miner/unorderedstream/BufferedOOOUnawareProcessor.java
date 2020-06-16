@@ -13,12 +13,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public class BufferedOutOfOrderProcessor extends ProcessWindowFunction<Event, DirectlyFollowsGraph, Long, TimeWindow> {
+public class BufferedOOOUnawareProcessor extends ProcessWindowFunction<Event, DirectlyFollowsGraph, Long, TimeWindow> {
 
     // We need to store in the state the least seen timestamp with each firing
     private ValueStateDescriptor<Event> leastSeenTimestampPerFiring;
 
-    public BufferedOutOfOrderProcessor()
+    public BufferedOOOUnawareProcessor()
     {
         leastSeenTimestampPerFiring = new ValueStateDescriptor<>("lastSeenTimestampPerFiring", Event.class);
 
@@ -36,10 +36,10 @@ public class BufferedOutOfOrderProcessor extends ProcessWindowFunction<Event, Di
         long lastTS = lastEvent != null?  lastEvent.getTimestamp(): Long.MIN_VALUE;
 
 
-        List<Event> orderedList = new ArrayList<>();
+        List<Event> unorderedList = new ArrayList<>();
 
         if (lastEvent != null)
-            orderedList.add(lastEvent);
+            unorderedList.add(lastEvent);
 
 
         for (Event e: iterable)
@@ -47,27 +47,24 @@ public class BufferedOutOfOrderProcessor extends ProcessWindowFunction<Event, Di
             // Ignore elements that arrive too late
             if (e.getTimestamp() >= lastTS)
             {
-                orderedList.add(e);
+                unorderedList.add(e);
 
             }
             else
                 System.out.println("Ignoring event: "+e.toString());
         }
 
-        orderedList.sort(Comparator.comparingLong(Event::getTimestamp));
-//        if (caseID == -1)
-//            System.out.println("Dummy elements ");
 
 
-        if (orderedList.size() > 0)
-            lastEvent = orderedList.get(orderedList.size()-1);
+        if (unorderedList.size() > 0)
+            lastEvent = unorderedList.get(unorderedList.size()-1);
 
         DirectlyFollowsGraph dfg = new DirectlyFollowsGraph();
 
 
-        for (int i = 0; i < orderedList.size() -1; i++)
+        for (int i = 0; i < unorderedList.size() -1; i++)
         {
-            Edge e = new Edge(orderedList.get(i).getActivity(), orderedList.get(i+1).getActivity());
+            Edge e = new Edge(unorderedList.get(i).getActivity(), unorderedList.get(i+1).getActivity());
             dfg.add(e,1);
         }
 //        if (caseID == -1)

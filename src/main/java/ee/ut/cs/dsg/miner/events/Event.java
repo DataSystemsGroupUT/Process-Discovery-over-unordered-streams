@@ -43,6 +43,15 @@ public class Event  implements Serializable {
     protected long timestamp;
 
     protected long arrivalTimestamp;
+    protected long sequenceNumber;
+
+    public  Event(String activity, long caseID, long  timestamp, long sequenceNumber)
+    {
+        this.activity = activity;
+        this.caseID = caseID;
+        this.timestamp = timestamp;
+        this.sequenceNumber = sequenceNumber;
+    }
 
     public Event(String activity, long caseID, long timestamp)
     {
@@ -52,6 +61,7 @@ public class Event  implements Serializable {
         this.arrivalTimestamp = System.currentTimeMillis();
     }
 
+    public long getSequenceNumber(){return  sequenceNumber;}
     @Override
     public boolean equals(Object other)
     {

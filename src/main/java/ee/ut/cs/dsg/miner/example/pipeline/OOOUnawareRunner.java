@@ -5,9 +5,9 @@ import ee.ut.cs.dsg.miner.events.Event;
 import ee.ut.cs.dsg.miner.example.source.EventLogSource;
 import ee.ut.cs.dsg.miner.example.source.EventMapper;
 import ee.ut.cs.dsg.miner.example.source.FixedUnorderedSource;
-import ee.ut.cs.dsg.miner.unorderedstream.BufferedOutOfOrderProcessor;
 import ee.ut.cs.dsg.miner.unorderedstream.FullDFGProcessor;
-import ee.ut.cs.dsg.miner.unorderedstream.IncrementalDFGProcessor;
+import ee.ut.cs.dsg.miner.unorderedstream.OOOUnawareProcessor;
+import ee.ut.cs.dsg.miner.unorderedstream.SpeculativeOutOfOrderProcessor;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.java.functions.KeySelector;
@@ -16,24 +16,18 @@ import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.AssignerWithPeriodicWatermarks;
-import org.apache.flink.streaming.api.watermark.Watermark;
-import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
-import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
-import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer011;
 
-import javax.annotation.Nullable;
 import java.util.Properties;
 
-public class BufferedOutOfOrderRunner {
+public class OOOUnawareRunner {
 
     private static long windowLength = 10L;
 
     public static void main(String[] args) throws Exception
     {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
+        env.setStreamTimeCharacteristic(TimeCharacteristic.IngestionTime);
 
 
         ParameterTool parameters = ParameterTool.fromArgs(args);
@@ -46,7 +40,9 @@ public class BufferedOutOfOrderRunner {
         String numRecordsToEmit;
         String interArrivalTime;
 
-
+        String generateOutput = parameters.get("generateOutput");
+        if (generateOutput == null)
+            generateOutput="No";
 
         String winLen = parameters.get("windowSize");
 
@@ -67,8 +63,6 @@ public class BufferedOutOfOrderRunner {
 
         int iNumRecordsToEmit=Integer.MAX_VALUE;
 
-
-
         if (numRecordsToEmit != null)
             iNumRecordsToEmit = Integer.parseInt(numRecordsToEmit);
 
@@ -76,6 +70,7 @@ public class BufferedOutOfOrderRunner {
 
         if (interArrivalTime != null)
             iInterArrivalTime = Long.parseLong(interArrivalTime);
+
 
         if (source.toLowerCase().equals("kafka")) {
             kafka = parameters.get("kafka");
@@ -94,37 +89,19 @@ public class BufferedOutOfOrderRunner {
             rawEventStream = env.addSource(new EventLogSource(fileName, iNumRecordsToEmit, iInterArrivalTime*1000));//.setParallelism(1);
         }
         else
-            //rawEventStream = env.addSource(new FixedInOrderSource());
+//            rawEventStream = env.addSource(new FixedInOrderSource());
             rawEventStream = env.addSource(new FixedUnorderedSource());
-
         rawEventStream
-                .assignTimestampsAndWatermarks(new AssignerWithPeriodicWatermarks<Event>() {
-                    long maxTimestampSeen = Long.MIN_VALUE;
-
-                    @Nullable
-                    @Override
-                    public Watermark getCurrentWatermark() {
-                        return  new Watermark(maxTimestampSeen);
-                    }
-
-                    @Override
-                    public long extractTimestamp(Event event, long l) {
-                        long ts = event.getTimestamp();
-                        maxTimestampSeen = Math.max(ts, maxTimestampSeen);
-                        return  ts;
-                    }
-                })
+              //  .filter(e -> e.getCaseID() == 175).setParallelism(1)
                 .keyBy(Event::getCaseID)
-                .window(TumblingEventTimeWindows.of(Time.minutes(windowLength)))
-                .process(new BufferedOutOfOrderProcessor()).setParallelism(1)
+                .process(new OOOUnawareProcessor()).setParallelism(1)//(windowLength*1000))
                 .keyBy((KeySelector<DirectlyFollowsGraph, String>) directlyFollowsGraph -> "1")
                 .process(new FullDFGProcessor()).setParallelism(1)
-            //    .process(new IncrementalDFGProcessor()).setParallelism(1)
-                .writeAsText(parameters.get("fileName")+"-GlobalDFG-Window-Length"+winLen+".txt", FileSystem.WriteMode.OVERWRITE).setParallelism(1);
+               // .process(new IncrementalDFGProcessor()).setParallelism(1)
+                .writeAsText(parameters.get("fileName")+"-GlobalDFG-OOOUnaware.txt", FileSystem.WriteMode.OVERWRITE).setParallelism(1);
 
+       JobExecutionResult result =  env.execute("Test Speculative Out of Order Processor");
 
-        JobExecutionResult result = env.execute("Test Buffered Out of Order Processor");
-        System.out.println("Total processed change DFGs "+result.getAccumulatorResult("ChangeDFGCount").toString());
-
+       System.out.println("Total processed change DFGs "+result.getAccumulatorResult("ChangeDFGCount").toString());
     }
 }

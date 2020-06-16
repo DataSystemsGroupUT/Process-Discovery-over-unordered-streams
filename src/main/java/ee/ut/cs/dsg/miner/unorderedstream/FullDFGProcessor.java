@@ -28,6 +28,7 @@ public class FullDFGProcessor extends KeyedProcessFunction<String, DirectlyFollo
             throws Exception {
 
 //        System.out.println(" Current graph key is "+context.getCurrentKey());
+//        System.out.println("Input graph computation window "+updatesToDFG.getComputingTimeStart()+ " to "+updatesToDFG.getComputingTimeEnd());
         intCounter.add(1);
         DirectlyFollowsGraph dfgSofar = dfgState.value();
 
@@ -35,18 +36,22 @@ public class FullDFGProcessor extends KeyedProcessFunction<String, DirectlyFollo
         if (dfgSofar == null)
             dfgSofar = new DirectlyFollowsGraph();
 
-        if (updatesToDFG.getNodes().size() > 1) {
+        if (updatesToDFG.getComputingTimeStart() > dfgSofar.getComputingTimeStart()
+                && updatesToDFG.getComputingTimeEnd() > dfgSofar.getComputingTimeEnd()) {
+
+//            System.out.println("A time progress happened and we should emit the global DFG");
+            collector.collect(dfgSofar);
+            dfgSofar.setComputingTimeEnd(updatesToDFG.getComputingTimeEnd());
+            dfgSofar.setComputingTimeStart(updatesToDFG.getComputingTimeStart());
+        }
+
+        if (updatesToDFG.getNodes().size() > 0) {
 //            System.out.println("DFG updated!");
+
+
             dfgSofar.merge(updatesToDFG);
 
-            if (updatesToDFG.getComputingTimeStart() > dfgSofar.getComputingTimeStart()
-                    && updatesToDFG.getComputingTimeEnd() > dfgSofar.getComputingTimeEnd()) {
 
-                System.out.println("A time progress happened and we should emit the global DFG");
-                collector.collect(dfgSofar);
-                dfgSofar.setComputingTimeEnd(updatesToDFG.getComputingTimeEnd());
-                dfgSofar.setComputingTimeStart(updatesToDFG.getComputingTimeStart());
-            }
             dfgState.update(dfgSofar);
         }
 //        else

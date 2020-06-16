@@ -10,17 +10,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 
-public class DFGGraphSource implements SourceFunction<Tuple2<Integer, String>> {
+public class DFGGraphSource implements SourceFunction<Tuple2<Long, String>> {
 
     private boolean running = true;
     private String filePath;
-    private int count = 1;
+    private long key = 1;
     public DFGGraphSource(String filePath)
     {
         this.filePath = filePath;
     }
     @Override
-    public void run(SourceContext<Tuple2<Integer, String>> sourceContext) throws Exception {
+    public void run(SourceContext<Tuple2<Long, String>> sourceContext) throws Exception {
 
         try {
 
@@ -42,11 +42,21 @@ public class DFGGraphSource implements SourceFunction<Tuple2<Integer, String>> {
             StringBuilder graphString = new StringBuilder();
             while (running && line != null ) {
 
+                if (line.startsWith("start") ) {
+                    key = Long.parseLong(line.split(":")[1].trim());
+                    line = reader.readLine();
+                    continue;
+                }
+                if (line.contains("DUMMY")) {
+                    line = reader.readLine();
+                    continue;
+                }
                 if (line.trim().length() == 0) // we are now ready to emit a new graph string tuple
                 {
-                    sourceContext.collect(new Tuple2<>(count, graphString.toString()));
+                    sourceContext.collect(new Tuple2<>(key, graphString.toString()));
+//                    System.out.println(graphString.toString());
                     graphString.setLength(0); // reset the buffer
-                    count++;
+
                 }
                 else
                 {
@@ -55,6 +65,7 @@ public class DFGGraphSource implements SourceFunction<Tuple2<Integer, String>> {
 
                 line=reader.readLine();
             }
+            System.out.println("Max key emitted: "+key  );
             reader.close();
 
         } catch (IOException ioe) {

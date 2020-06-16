@@ -124,7 +124,7 @@ public class SpeculativeOutOfOrderProcessor extends KeyedProcessFunction<Long, E
         }
         bufferedEvents.update(insertionSortedList);
         // The setting of the time stamp is used to control the emission of updated global DFG later on.
-        long ts = context.timestamp();
+        long ts = event.getSequenceNumber();
         dfgSoFar.setComputingTimeStart(ts);
         dfgSoFar.setComputingTimeEnd(ts);
 

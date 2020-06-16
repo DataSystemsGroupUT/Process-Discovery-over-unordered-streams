@@ -108,53 +108,73 @@ public class DirectlyFollowsGraphTest {
                 "Edge from: Check  application  form completeness to: Return application back to applicant  Frequency: 11\n" +
                 "Edge from: Approve application to: Loan  application approved  Frequency: 57";
 
-        String orderedBuffered ="Edge from: Appraise property to: Assess loan risk  Frequency: 46\n" +
-                "Edge from: Check credit history to: Appraise property  Frequency: 53\n" +
-                "Edge from: Appraise property to: Check credit history  Frequency: 78\n" +
-                "Edge from: Send home insurance quote to: Loan  application received  Frequency: 1\n" +
-                "Edge from: Check  application  form completeness to: Verify repayment agreement  Frequency: 1\n" +
-                "Edge from: Receive updated application to: Check  application  form completeness  Frequency: 5\n" +
-                "Edge from: Check  application  form completeness to: Appraise property  Frequency: 92\n" +
-                "Edge from: Verify repayment agreement to: Cancel application  Frequency: 50\n" +
-                "Edge from: Assess eligibility to: Send home insurance quote  Frequency: 3\n" +
-                "Edge from: Loan  application approved to: Appraise property  Frequency: 1\n" +
-                "Edge from: Check credit history to: Assess loan risk  Frequency: 124\n" +
-                "Edge from: Loan  application canceled to: Loan  application received  Frequency: 1\n" +
-                "Edge from: Loan  application approved to: Loan  application received  Frequency: 1\n" +
-                "Edge from: Reject application to: Loan application rejected  Frequency: 111\n" +
-                "Edge from: Prepare acceptance pack to: Check if home insurance quote is requested  Frequency: 62\n" +
-                "Edge from: Appraise property to: Assess eligibility  Frequency: 36\n" +
-                "Edge from: Check if home insurance quote is requested to: Send acceptance pack  Frequency: 26\n" +
-                "Edge from: Cancel application to: Loan  application canceled  Frequency: 64\n" +
-                "Edge from: Check credit history to: Approve application  Frequency: 1\n" +
-                "Edge from: Loan  application canceled to: Check  application  form completeness  Frequency: 1\n" +
-                "Edge from: Verify repayment agreement to: Check credit history  Frequency: 1\n" +
-                "Edge from: Check if home insurance quote is requested to: Send home insurance quote  Frequency: 38\n" +
-                "Edge from: Assess eligibility to: Reject application  Frequency: 87\n" +
-                "Edge from: Loan  application canceled to: Check credit history  Frequency: 1\n" +
-                "Edge from: Return application back to applicant to: Receive updated application  Frequency: 9\n" +
-                "Edge from: Verify repayment agreement to: Loan  application received  Frequency: 3\n" +
-                "Edge from: Loan  application received to: Cancel application  Frequency: 1\n" +
-                "Edge from: Send home insurance quote to: Verify repayment agreement  Frequency: 53\n" +
-                "Edge from: Assess loan risk to: Appraise property  Frequency: 37\n" +
-                "Edge from: Loan  application received to: Check  application  form completeness  Frequency: 161\n" +
-                "Edge from: Check  application  form completeness to: Check credit history  Frequency: 98\n" +
-                "Edge from: Assess loan risk to: Assess eligibility  Frequency: 120\n" +
-                "Edge from: Send acceptance pack to: Verify repayment agreement  Frequency: 35\n" +
-                "Edge from: Assess eligibility to: Send acceptance pack  Frequency: 7\n" +
-                "Edge from: Assess eligibility to: Prepare acceptance pack  Frequency: 70\n" +
-                "Edge from: Verify repayment agreement to: Approve application  Frequency: 41\n" +
-                "Edge from: Check  application  form completeness to: Return application back to applicant  Frequency: 10\n" +
-                "Edge from: Approve application to: Loan  application approved  Frequency: 54\n" +
-                "Edge from: Appraise property to: Cancel application  Frequency: 1";
+        String orderedBuffered ="Edge from: Appraise property to: Assess loan risk  Frequency: 69\n" +
+                "Edge from: Check credit history to: Appraise property  Frequency: 69\n" +
+                "Edge from: Appraise property to: Check credit history  Frequency: 121\n" +
+                "Edge from: Receive updated application to: Check  application  form completeness  Frequency: 11\n" +
+                "Edge from: Check  application  form completeness to: Appraise property  Frequency: 121\n" +
+                "Edge from: Verify repayment agreement to: Cancel application  Frequency: 68\n" +
+                "Edge from: Assess eligibility to: Send home insurance quote  Frequency: 6\n" +
+                "Edge from: Check credit history to: Assess loan risk  Frequency: 181\n" +
+                "Edge from: Reject application to: Loan application rejected  Frequency: 125\n" +
+                "Edge from: Prepare acceptance pack to: Check if home insurance quote is requested  Frequency: 109\n" +
+                "Edge from: Check if home insurance quote is requested to: Send acceptance pack  Frequency: 44\n" +
+                "Edge from: Appraise property to: Assess eligibility  Frequency: 60\n" +
+                "Edge from: Cancel application to: Loan  application canceled  Frequency: 68\n" +
+                "Edge from: Assess eligibility to: Reject application  Frequency: 125\n" +
+                "Edge from: Check if home insurance quote is requested to: Send home insurance quote  Frequency: 65\n" +
+                "Edge from: Return application back to applicant to: Receive updated application  Frequency: 11\n" +
+                "Edge from: Send home insurance quote to: Verify repayment agreement  Frequency: 70\n" +
+                "Edge from: Assess loan risk to: Appraise property  Frequency: 60\n" +
+                "Edge from: Loan  application received to: Check  application  form completeness  Frequency: 250\n" +
+                "Edge from: Assess loan risk to: Assess eligibility  Frequency: 190\n" +
+                "Edge from: Check  application  form completeness to: Check credit history  Frequency: 129\n" +
+                "Edge from: Send acceptance pack to: Verify repayment agreement  Frequency: 54\n" +
+                "Edge from: Assess eligibility to: Send acceptance pack  Frequency: 10\n" +
+                "Edge from: Assess eligibility to: Prepare acceptance pack  Frequency: 109\n" +
+                "Edge from: Verify repayment agreement to: Approve application  Frequency: 56\n" +
+                "Edge from: Check  application  form completeness to: Return application back to applicant  Frequency: 11\n" +
+                "Edge from: Approve application to: Loan  application approved  Frequency: 57\n" +
+                "Edge from: Send home insurance quote to: Approve application  Frequency: 1";
 
-
+        String bufferedUnordered = "Edge from: Appraise property to: Assess loan risk  Frequency: 69\n" +
+                "Edge from: Check credit history to: Appraise property  Frequency: 69\n" +
+                "Edge from: Appraise property to: Check credit history  Frequency: 120\n" +
+                "Edge from: Receive updated application to: Check  application  form completeness  Frequency: 11\n" +
+                "Edge from: Check  application  form completeness to: Appraise property  Frequency: 119\n" +
+                "Edge from: Verify repayment agreement to: Cancel application  Frequency: 67\n" +
+                "Edge from: Assess eligibility to: Send home insurance quote  Frequency: 7\n" +
+                "Edge from: Check credit history to: Assess loan risk  Frequency: 181\n" +
+                "Edge from: Send acceptance pack to: Cancel application  Frequency: 1\n" +
+                "Edge from: Loan  application received to: Appraise property  Frequency: 1\n" +
+                "Edge from: Reject application to: Loan application rejected  Frequency: 125\n" +
+                "Edge from: Prepare acceptance pack to: Check if home insurance quote is requested  Frequency: 107\n" +
+                "Edge from: Check if home insurance quote is requested to: Send acceptance pack  Frequency: 44\n" +
+                "Edge from: Appraise property to: Assess eligibility  Frequency: 60\n" +
+                "Edge from: Cancel application to: Loan  application canceled  Frequency: 67\n" +
+                "Edge from: Assess eligibility to: Check if home insurance quote is requested  Frequency: 1\n" +
+                "Edge from: Assess eligibility to: Reject application  Frequency: 125\n" +
+                "Edge from: Check if home insurance quote is requested to: Send home insurance quote  Frequency: 64\n" +
+                "Edge from: Return application back to applicant to: Receive updated application  Frequency: 11\n" +
+                "Edge from: Send home insurance quote to: Verify repayment agreement  Frequency: 71\n" +
+                "Edge from: Assess loan risk to: Prepare acceptance pack  Frequency: 1\n" +
+                "Edge from: Assess loan risk to: Appraise property  Frequency: 60\n" +
+                "Edge from: Loan  application received to: Check  application  form completeness  Frequency: 246\n" +
+                "Edge from: Assess loan risk to: Assess eligibility  Frequency: 189\n" +
+                "Edge from: Check  application  form completeness to: Check credit history  Frequency: 128\n" +
+                "Edge from: Loan  application received to: Check credit history  Frequency: 1\n" +
+                "Edge from: Send acceptance pack to: Verify repayment agreement  Frequency: 53\n" +
+                "Edge from: Assess eligibility to: Send acceptance pack  Frequency: 10\n" +
+                "Edge from: Assess eligibility to: Prepare acceptance pack  Frequency: 106\n" +
+                "Edge from: Verify repayment agreement to: Approve application  Frequency: 57\n" +
+                "Edge from: Check  application  form completeness to: Return application back to applicant  Frequency: 11\n" +
+                "Edge from: Approve application to: Loan  application approved  Frequency: 57\n\n";
 
         DirectlyFollowsGraph graph1, graph2, graph3, graph4;
         graph1 = DirectlyFollowsGraph.buildFromStrings(orderedBuffered);
         graph2 = DirectlyFollowsGraph.buildFromStrings(orderedSpeculative);
         graph3 = DirectlyFollowsGraph.buildFromStrings(unorderedSpeculative_10_percent);
-//        graph4 = DirectlyFollowsGraph.buildFromStrings(unordered60Percent);
+        graph4 = DirectlyFollowsGraph.buildFromStrings(bufferedUnordered);
 
         // from unordered 50% to the ordered
    //     System.out.println("Accuracy of ordered speculative DFG compared to ordered buffered DFG "+graph2.compareTo(graph1));
@@ -170,6 +190,6 @@ public class DirectlyFollowsGraphTest {
 
 
 
-     //   System.out.println("Accuracy of ordered buffered DFG compared to ordered speculative DFG "+graph1.compareTo(graph2));
+       System.out.println("Accuracy of buffered unordered DFG compared to buffered ordered DFG "+graph4.compareTo(graph1));
     }
 }
